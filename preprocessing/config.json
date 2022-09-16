@@ -1,0 +1,12 @@
+{
+  "path_to_data" : "/home/ediamantidou/PycharmProjects/ACTIVE/active_data/data/watch/rawData",
+
+  "data_format": ".txt",
+
+  "segmentation_window": 3,
+
+  "median": {
+    "flag": "True",
+    "window":4
+  }
+}
