@@ -395,8 +395,7 @@ def synchronise(accData, gyroData, path):
                 acc_data = acc_data.drop([0]).reset_index(drop=True)
 
             sync_acc, sync_gyro = get_sec_data(acc_data[['x', 'y', 'z', 'time']], gyro_data[['x', 'y', 'z', 'time']])
-            print(sync_acc)
-            sys.exit()
+
             if sync_acc.shape[0] == sync_gyro.shape[0]:
 
                 # ## Save sync data
