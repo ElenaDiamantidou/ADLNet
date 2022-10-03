@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
             # Synchronise data
             data = []
-            process_data.synchronise(accData, gyroData, path=activity)
+            # process_data.synchronise(accData, gyroData, path=activity)
 
     # # ## Apply Median filter at sync data
     # print("########################")
