@@ -25,7 +25,7 @@ def configuration():
 
     """
     # ## Parse configuration
-    return json.load(open('config.json'))
+    return json.load(open('../config.json'))
 
 
 if __name__ == '__main__':
@@ -46,8 +46,10 @@ if __name__ == '__main__':
 
         for activity in activities_of_user:
             # Load activity data
-            accData, gyroData = load_data.main(activity, data_format=config["data_format"])
+            rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
+
             # Synchronise data
+            data = []
             process_data.synchronise(accData, gyroData, path=activity)
 
     # # ## Apply Median filter at sync data

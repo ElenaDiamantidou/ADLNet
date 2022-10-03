@@ -5,7 +5,6 @@ email        : elenadiamantidou@gmail.com
 """
 
 import os, sys, errno
-import pandas
 import pandas as pd
 
 
@@ -34,32 +33,52 @@ def parse_data(second):
     return directories
 
 
-def parse_acc_data(path_to_data):
-    accData = {}
+def parse_raw_data(path_to_data, sensors):
+    """
+    Args:
+        path_to_data: str path to load raw data
+        sensors: list of str sensors to load raw measurements
+
+    Returns: dictionary of activities of raw sensor measurements
+
+    """
+    rawData = {}
     activity_label = path_to_data.split('/')[-1]
     for activity in os.listdir(path_to_data):
-        data = pd.read_csv(os.path.join(path_to_data, activity, 'accData.txt'), delimiter=' ', header=None)
-        data.columns = ['x', 'y', 'z', 'time']
-        data['x'] = data['x'].str.replace(',', '.').astype(float)
-        data['y'] = data['y'].str.replace(',', '.').astype(float)
-        data['z'] = data['z'].str.replace(',', '.').astype(float)
+        raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s+'Data.txt'),
+                              delimiter=' ', header=None) for s in sensors}
+        for s in raw.keys():
+            raw[s].columns = ['x', 'y', 'z', 'time']
+            raw[s]['time'] = pd.to_datetime(raw[s]['time'])
+            raw[s]['x'] = raw[s]['x'].str.replace(',', '.').astype(float)
+            raw[s]['y'] = raw[s]['y'].str.replace(',', '.').astype(float)
+            raw[s]['z'] = raw[s]['z'].str.replace(',', '.').astype(float)
 
-        data['time'] = pd.to_datetime(data['time'])
-        accData[activity] = data
+        rawData[activity] = raw
 
-    return accData
+    return rawData
 
 
-def parse_csv_acc_data(path_to_data):
-    accData = {}
+def parse_csv_raw_data(path_to_data, sensors):
+    """
+    Args:
+        path_to_data: str path to load raw data
+        sensors: list of str sensors to load raw measurements
+
+    Returns: dictionary of activities of raw sensor measurements
+
+    """
+    rawData = {}
     activity_label = path_to_data.split('/')[-1]
     for activity in os.listdir(path_to_data):
-        data = pd.read_csv(os.path.join(path_to_data, activity, 'accData.csv'))
-        data.columns = ['x', 'y', 'z', 'time']
-        data['time'] = pd.to_datetime(data['time'])
-        accData[activity] = data
+        raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s + 'Data.csv')) for s in sensors}
+        for s in raw.keys():
+            raw[s].columns = ['x', 'y', 'z', 'time']
+            raw[s]['time'] = pd.to_datetime(raw[s]['time'])
 
-    return accData
+        rawData[activity] = raw
+
+    return rawData
 
 
 def parse_gyro_data(path_to_data):
@@ -71,17 +90,6 @@ def parse_gyro_data(path_to_data):
         data['y'] = data['y'].str.replace(',', '.').astype(float)
         data['z'] = data['z'].str.replace(',', '.').astype(float)
 
-        data['time'] = pd.to_datetime(data['time'])
-        gyroData[activity] = data
-
-    return gyroData
-
-
-def parse_csv_gyro_data(path_to_data):
-    gyroData = {}
-    for activity in os.listdir(path_to_data):
-        data = pd.read_csv(os.path.join(path_to_data, activity, 'gyroData.csv'))
-        data.columns = ['x', 'y', 'z', 'time']
         data['time'] = pd.to_datetime(data['time'])
         gyroData[activity] = data
 
@@ -105,20 +113,19 @@ def parse_axes_data(path_to_data):
     return accData, gyroData
 
 
-def main(activity_data, data_format):
+def main(activity_data, data_format, sensors):
     """
     Args:
         activity_data: str of path to load user activity raw measurement
         data_format: str of data format [.csv or .txt]
+        sensors: list of str of raw sensor measurements to load
 
     Returns: dictionary of raw measurements from a user for multiple events of specific activity
 
     """
     if data_format == '.csv':
-        accelerometer = parse_csv_acc_data(activity_data)
-        gyroscope = parse_csv_gyro_data(activity_data)
+        data = parse_csv_raw_data(activity_data, sensors)
     else:
-        accelerometer = parse_acc_data(activity_data)
-        gyroscope = parse_gyro_data(activity_data)
+        data = parse_raw_data(activity_data, sensors)
 
-    return accelerometer, gyroscope
+    return data

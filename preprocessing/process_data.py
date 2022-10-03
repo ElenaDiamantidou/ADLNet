@@ -383,13 +383,15 @@ def synchronise(accData, gyroData, path):
             acc_data['sec'] = acc_data['time'].dt.second
             gyro_data['sec'] = gyro_data['time'].dt.second
 
-            # print(sorted(dict(acc_data['second'].value_counts()).items()))
-            # print(sorted(dict(gyro_data['second'].value_counts()).items()))
+            # print(sorted(dict(acc_data['sec'].value_counts()).items()))
+            # print(sorted(dict(gyro_data['sec'].value_counts()).items()))
 
-            # Drop dublicates that caused during the data collection
+            # Drop duplicates that caused during the data collection
             acc_data = acc_data.drop_duplicates(subset='time', keep="first").reset_index(drop=True)
             gyro_data = gyro_data.drop_duplicates(subset='time', keep="first").reset_index(drop=True)
 
+            # create time range with 50Hz freq
+            sys.exit()
             # decide to drop the 1st
             if acc_data['msec'][1] - acc_data['msec'][0] > 10:
                 acc_data = acc_data.drop([0]).reset_index(drop=True)

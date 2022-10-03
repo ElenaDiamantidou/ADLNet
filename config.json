@@ -3,6 +3,8 @@
 
   "data_format": ".txt",
 
+  "sensors": ["acc", "gyr", "gravity"],
+
   "segmentation_window": 3,
 
   "median": {
