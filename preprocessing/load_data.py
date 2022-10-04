@@ -44,6 +44,7 @@ def parse_raw_data(path_to_data, sensors):
     """
     rawData = {}
     activity_label = path_to_data.split('/')[-1]
+
     for activity in os.listdir(path_to_data):
         raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s+'Data.txt'),
                               delimiter=' ', header=None) for s in sensors}

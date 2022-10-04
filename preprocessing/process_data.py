@@ -7,6 +7,8 @@ email        : ediamantidou@iti.gr
 import os, sys, errno
 
 import datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import signal
@@ -259,156 +261,81 @@ def nearest_time(tms, df):
     return the_index
 
 
-def get_sec_data(acc_data, gyro_data):
-    """
-    :param acc_data: DataFrame with acc data
-    :param gyro_data: DataFrame with gyro data
-    :return: dictionaries with one_sec_data
-
-    Description: Group data by 1s to filter values (50Hz)
+def get_sync_data(sync_time, raw_data):
     """
 
-    def add_value(data, tms):
-        """
-        :param data: DataFrame
-        :param tms: timestamp
-        :return: Interpolated DataFrame
+    Args:
+        sync_time: pandas data range containing time to sync
+        raw_data: DataFrame with sensor unsync measurements
 
-        Description: Given a timestamp at the end of DataFrame, find an empty time to interpolate missing recordings
-        """
-        offset = datetime.timedelta(microseconds=1000)
-        time_to_add = tms + offset
-        while time_to_add in data['time']:
-            time_to_add = tms - (offset + offset)
-            offset += offset
-        add = pd.DataFrame({'x': None, 'y': None, 'z': None, 'time': time_to_add}, index=[0])
-        # Interpolate missing data
-        data = pd.concat([data, add]).sort_values('time').reset_index(drop=True)
-        # try:
-        data = data.interpolate(method='pad')
-        # except:
-        #     data = data.interpolate(method='pad')
+    Returns: dictionaries with one_sec_data
 
-        return data
+    Description: Sync raw sensor measurements
+    """
 
-    acc_data = acc_data.set_index('time')
-    gyro_data = gyro_data.set_index('time')
+    raw_data = raw_data.set_index('time')
+    raw_data['sync'] = np.nan
+    raw_data = raw_data.sort_index()
+    sync_data = pd.DataFrame()
+    x, y, z, time, unsync_time = [], [], [], [], []
+    for i, s in enumerate(sync_time):
+        nearest_tms_index = raw_data.index.get_indexer([s], method='nearest')[0]
+        raw_data['sync'].iloc[nearest_tms_index] = 'yes'
+        x.append(raw_data.iloc[nearest_tms_index]['x'])
+        y.append(raw_data.iloc[nearest_tms_index]['y'])
+        z.append(raw_data.iloc[nearest_tms_index]['z'])
+        time.append(s)
+        unsync_time.append(raw_data.iloc[nearest_tms_index].name)
 
-    acc_dict, gyro_dict = {}, {}
-    # ## Get data for each second of recording
-    for key, group in acc_data.groupby(pd.Grouper(freq='1s', origin=acc_data.index[0])):
-        if len(group) > 45:
-            acc_dict[key] = group.reset_index()
+        # cur = dict(zip(['x', 'y', 'z'], raw_data.iloc[nearest_tms_index][['x', 'y', 'z']]))
+        # cur['time'], cur['unsync_time'] = s, raw_data.iloc[nearest_tms_index].name
+        # sync_data = pd.concat([sync_data, pd.DataFrame(cur, index=[0])])
+        # break
+    sync_data = pd.DataFrame({'time': time, 'unsync_time': unsync_time,
+                              'x': x, 'y': y, 'z': z})
 
-    for key, group in gyro_data.groupby(pd.Grouper(freq='1s', origin=acc_data.index[0])):
-        if len(group) > 45:
-            gyro_dict[key] = group.reset_index()
-
-    # get the minimum length of data between acc and gyro
-    if len(gyro_dict) < len(acc_dict):
-        interpolation_range = len(gyro_dict)
-    else:
-        interpolation_range = len(acc_dict)
-
-    # ## Interpolate data
-    # 50 since 50Hz sampling rate
-    for i in range(interpolation_range):
-        if len(acc_dict[list(acc_dict.keys())[i]]) != 50 or len(gyro_dict[list(gyro_dict.keys())[i]]) != 50:
-            if len(acc_dict[list(acc_dict.keys())[i]]) > 50:
-                # remove data points from the activity beginning
-                acc_diff = len(acc_dict[list(acc_dict.keys())[i]]) - 50
-
-                acc_dict[list(acc_dict.keys())[i]] = acc_dict[list(acc_dict.keys())[i]].drop(
-                    np.arange(acc_diff)).reset_index(drop=True)
-
-            if len(gyro_dict[list(gyro_dict.keys())[i]]) > 50:
-                # remove data points from the activity beginning
-                gyro_diff = len(gyro_dict[list(gyro_dict.keys())[i]]) - 50
-                gyro_dict[list(gyro_dict.keys())[i]] = gyro_dict[list(gyro_dict.keys())[i]].drop(
-                    np.arange(gyro_diff)).reset_index(drop=True)
-
-            while len(acc_dict[list(acc_dict.keys())[i]]) < 50:
-                # add values at the and of the activity
-                df = acc_dict[list(acc_dict.keys())[i]]
-                acc_dict[list(acc_dict.keys())[i]] = add_value(df, df['time'].iloc[-2])
-
-            while len(gyro_dict[list(gyro_dict.keys())[i]]) < 50:
-                # add values at the and of the activity
-                df = gyro_dict[list(gyro_dict.keys())[i]]
-                gyro_dict[list(gyro_dict.keys())[i]] = add_value(df, df['time'].iloc[-2])
-
-    # Merge Data to a Dataframe
-    df_acc, df_gyro = pd.DataFrame(), pd.DataFrame()
-    for key, sub_df in acc_dict.items():
-        # Add your sub_df one by one
-        df_acc = pd.concat([df_acc, sub_df], ignore_index=False)
-    for key, sub_df in gyro_dict.items():
-        # Add your sub_df one by one
-        df_gyro = pd.concat([df_gyro, sub_df], ignore_index=False)
-
-    df_acc = df_acc.reset_index(drop=True)
-    df_gyro = df_gyro.reset_index(drop=True)
-
-    # Right order of columns
-    df_acc = df_acc[['x', 'y', 'z', 'time']]
-    df_gyro = df_gyro[['x', 'y', 'z', 'time']]
-
-    if len(df_acc['x']) != len(df_gyro['x']):
-        diff = len(df_acc['x']) - len(df_gyro['x'])
-        df_acc = df_acc[:-diff]
-
-    return df_acc, df_gyro
+    return sync_data
 
 
-def synchronise(accData, gyroData, path):
+def synchronise(rawData, user, path):
     """
     Args:
-        accData: dictionary with current user acc data
-        gyroData: dictionary with current user gyro data
+        rawData: dictionary with current user raw data of dictionaries with multi-sensor measurements
+        user: str containing the id of user
         path: path to directory to save the sync data
 
     Returns: Sync and filtered data from both sensors
 
     """
 
-    dict_keys = list(accData.keys())
-    for key in dict_keys:
-        acc_data = accData[key]
-        gyro_data = gyroData[key]
-        # ## Check if data are available and sensor fails were occurred
-        if acc_data.shape[0] >= 100 and gyro_data.shape[0] >= 100:
+    activity_keys = list(rawData.keys())
+    for key in activity_keys:
+        cur_path = os.path.join(path, 'syncData', user, key)
+        make_sure_path_exists(cur_path)
+        sensor_keys = rawData[key].keys()
+        activity_data = rawData[key]
+        # ## Check if data are available and sensor fails were not occurred
+        if (len(activity_data[k]) >= 100 for k in sensor_keys):
+            times = []
+            for k in activity_data.keys():
+                # ## Calculate time in msec & sec
+                activity_data[k]['msec'] = activity_data[k]['time'].dt.microsecond//1000
+                activity_data[k]['sec'] = activity_data[k]['time'].dt.second
 
-            acc_data['msec'] = acc_data['time'].dt.microsecond//1000
-            gyro_data['msec'] = gyro_data['time'].dt.microsecond//1000
-            acc_data['sec'] = acc_data['time'].dt.second
-            gyro_data['sec'] = gyro_data['time'].dt.second
+                # print(sorted(dict(activity_data[k]['sec'].value_counts()).items()))
 
-            # print(sorted(dict(acc_data['sec'].value_counts()).items()))
-            # print(sorted(dict(gyro_data['sec'].value_counts()).items()))
-
-            # Drop duplicates that caused during the data collection
-            acc_data = acc_data.drop_duplicates(subset='time', keep="first").reset_index(drop=True)
-            gyro_data = gyro_data.drop_duplicates(subset='time', keep="first").reset_index(drop=True)
+                # Drop duplicates that caused during the data collection
+                activity_data[k] = activity_data[k].drop_duplicates(subset='time', keep="first").reset_index(drop=True)
+                times.append([activity_data[k]['time'].iloc[0], activity_data[k]['time'].iloc[-1]])
 
             # create time range with 50Hz freq
-            sys.exit()
-            # decide to drop the 1st
-            if acc_data['msec'][1] - acc_data['msec'][0] > 10:
-                acc_data = acc_data.drop([0]).reset_index(drop=True)
+            sync_time = pd.date_range(start=min([i[0] for i in times]), end=max([i[1] for i in times]), freq='0.02S')
 
-            sync_acc, sync_gyro = get_sec_data(acc_data[['x', 'y', 'z', 'time']], gyro_data[['x', 'y', 'z', 'time']])
+            # # decide to drop the 1st
+            # if acc_data['msec'][1] - acc_data['msec'][0] > 10:
+            #     acc_data = acc_data.drop([0]).reset_index(drop=True)
 
-            if sync_acc.shape[0] == sync_gyro.shape[0]:
-
-                # ## Save sync data
-                key = list(key)
-                key[13] = ":"
-                key[16] = ":"
-                key = ''.join(key)
-
-                # current_path = os.path.join('..', 'data', 'watch', 'syncData', path[22:], key)
-                # make_sure_path_exists(current_path)
-                #
-                # sync_acc.to_csv(current_path + '/accData.csv', index=False)
-                # sync_gyro.to_csv(current_path + '/gyroData.csv', index=False)
-
+            for k in activity_data.keys():
+                filename = os.path.join(cur_path, k + '.csv')
+                syncData = get_sync_data(sync_time, activity_data[k][['x', 'y', 'z', 'time']])
+                syncData.to_csv(filename, index=False)

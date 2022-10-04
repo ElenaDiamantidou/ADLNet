@@ -33,7 +33,8 @@ if __name__ == '__main__':
     config = configuration()
     path_to_data = config["path_to_data"]
     print('Process raw sensor data')
-    users = load_data.parde_dir(path_to_data=path_to_data)
+    path_to_raw_data = os.path.join(path_to_data, 'rawData')
+    users = load_data.parde_dir(path_to_data=path_to_raw_data)
     usernames = [user.split('/')[-1] for user in users]
 
     print("########################")
@@ -41,16 +42,16 @@ if __name__ == '__main__':
     print()
     for user in usernames:
         # Parse paths for user activities
-        activities_of_user = [os.path.join(path_to_data, user, activity) for activity in
-                              os.listdir(os.path.join(path_to_data, user))]
+        activities_of_user = [os.path.join(path_to_raw_data, user, activity) for activity in
+                              os.listdir(os.path.join(path_to_raw_data, user))]
 
         for activity in activities_of_user:
             # Load activity data
+            print(user, activity)
             rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
-
             # Synchronise data
-            data = []
-            # process_data.synchronise(accData, gyroData, path=activity)
+            process_data.synchronise(rawData, user=user, path=path_to_data)
+            sys.exit()
 
     # # ## Apply Median filter at sync data
     # print("########################")
