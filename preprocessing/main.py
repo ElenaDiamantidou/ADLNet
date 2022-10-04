@@ -48,10 +48,11 @@ if __name__ == '__main__':
         for activity in activities_of_user:
             # Load activity data
             print(user, activity)
+            # Load raw sensor measurements
             rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
+
             # Synchronise data
             process_data.synchronise(rawData, user=user, path=path_to_data)
-            sys.exit()
 
     # # ## Apply Median filter at sync data
     # print("########################")

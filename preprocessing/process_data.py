@@ -278,19 +278,20 @@ def get_sync_data(sync_time, raw_data):
     raw_data = raw_data.sort_index()
     sync_data = pd.DataFrame()
     x, y, z, time, unsync_time = [], [], [], [], []
+
+    # ## The synchronisation is based on a common time range fixed in 50Hz
     for i, s in enumerate(sync_time):
+        # Get the index with the nearest timestamp to the base timestamp
         nearest_tms_index = raw_data.index.get_indexer([s], method='nearest')[0]
-        raw_data['sync'].iloc[nearest_tms_index] = 'yes'
+        # just for analysis
+        # raw_data['sync'].iloc[nearest_tms_index] = 'yes'
+
         x.append(raw_data.iloc[nearest_tms_index]['x'])
         y.append(raw_data.iloc[nearest_tms_index]['y'])
         z.append(raw_data.iloc[nearest_tms_index]['z'])
         time.append(s)
         unsync_time.append(raw_data.iloc[nearest_tms_index].name)
 
-        # cur = dict(zip(['x', 'y', 'z'], raw_data.iloc[nearest_tms_index][['x', 'y', 'z']]))
-        # cur['time'], cur['unsync_time'] = s, raw_data.iloc[nearest_tms_index].name
-        # sync_data = pd.concat([sync_data, pd.DataFrame(cur, index=[0])])
-        # break
     sync_data = pd.DataFrame({'time': time, 'unsync_time': unsync_time,
                               'x': x, 'y': y, 'z': z})
 
@@ -304,9 +305,10 @@ def synchronise(rawData, user, path):
         user: str containing the id of user
         path: path to directory to save the sync data
 
-    Returns: Sync and filtered data from both sensors
+    Returns: Sync data from all raw sensor measurements
 
     """
+    # TODO: optimise sync time
 
     activity_keys = list(rawData.keys())
     for key in activity_keys:
@@ -314,7 +316,9 @@ def synchronise(rawData, user, path):
         make_sure_path_exists(cur_path)
         sensor_keys = rawData[key].keys()
         activity_data = rawData[key]
+
         # ## Check if data are available and sensor fails were not occurred
+        # ## Process metrics with >= 100 sample recordings (100 samples equal to 2 sec of activity)
         if (len(activity_data[k]) >= 100 for k in sensor_keys):
             times = []
             for k in activity_data.keys():
