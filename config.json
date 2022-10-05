@@ -10,7 +10,7 @@
   "butter" : "False",
 
   "median": {
-    "flag": "True",
+    "flag": "False",
     "size":4
   },
 

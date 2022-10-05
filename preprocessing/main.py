@@ -92,23 +92,25 @@ if __name__ == '__main__':
                 process_data.median_filter(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data,
                                            f_size=config["median"]["size"])
 
-    # # ## Segment data
-    # print("########################")
-    # print('Segmentation of data...')
-    # print('Window: ', second, 's with 50% overlap')
-    # print()
-    # for user in usernames:
-    #     print('Segmentation for:', user)
-    #     path_to_sync_butter_data = '../data/watch/butterworthData/'
-    #     activities_of_user = [os.path.join(path_to_sync_butter_data, user, activity) for activity in
-    #                           os.listdir(path_to_sync_butter_data + user)]
-    #     for activity in activities_of_user:
-    #         accData, gyroData = load_data.main(activity, '.csv')
-    #         process_data.segment_data(accData, gyroData, path=activity, second=second)
+    # ## Segment data
+    print("########################")
+    print('Segmentation of data...')
+    print('Window: ', config["segmentation_window"], 's with 50% overlap')
+    print()
+    for user in usernames:
+        print('Segmentation for:', user)
+        path_to_filter_data = os.path.join(path_to_data, 'medianData')
+        activities_of_user = [os.path.join(path_to_filter_data, user, activity) for activity in
+                              os.listdir(os.path.join(path_to_filter_data, user))]
+
+        for activity in activities_of_user:
+            rawData = load_data.main(activity, '.csv', sensors=config["sensors"])
+            process_data.segment_data(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data,
+                                      second=config["segmentation_window"])
     #
-    # ## Concatenate data of the same activity
+    # # ## Concatenate data of the same activity
     # for user in usernames:
-    #     path_to_segment_data = '../data/watch/segmentData/' + str(second) + 's/'
+    #     path_to_segment_data = '../data/watch/segmentData/' + str(config["segmentation_window"]) + 's/'
     #     activities_of_user = [os.path.join(path_to_segment_data, user, activity) for activity in
     #                           os.listdir(path_to_segment_data + user)]
     #     for activity in activities_of_user:

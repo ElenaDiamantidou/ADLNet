@@ -33,6 +33,8 @@ def median_filter(rawData, user, activity, path, f_size=3):
     Returns: dictionary of DataFrames with median filtered signals
 
     Description: Apply median filter to the signal for noise reduction
+                 Save filtered data into .csv files
+                 Directory path_to_data/medianData
     """
 
     def median(data):
@@ -74,7 +76,6 @@ def butterworth_filter(rawData, user, activity, path):
 
     def butterworth(data):
         """
-
         Args:
             data: DataSeries of single axes raw measurements
 
@@ -99,7 +100,6 @@ def butterworth_filter(rawData, user, activity, path):
     for key in activity_keys:
         cur_path = os.path.join(path, 'butterworthData', user, activity, key)
         make_sure_path_exists(cur_path)
-        sensor_keys = rawData[key].keys()
         activity_data = rawData[key]
 
         # Get raw measurements for each sensor
@@ -116,21 +116,38 @@ def butterworth_filter(rawData, user, activity, path):
             data_butter.to_csv(filename, index=False)
 
 
-def segment_data(accData, gyroData, path, second=1):
+def segment_data(rawData, user, activity, path, second=1):
     """
-    :param accData: filtered accelerometer signal
-    :param gyroData: filtered gyroscope signal
-    :param path: path of the data
-    :param second: segmentation time
-    :return: dataframe with sensor data of activity
+    Args:
+       rawData: dictionary of DataFrames with current user raw data of dictionaries with multi-sensor measurements
+       user: str containing the id of user
+       activity: str of activity
+       path: path to directory to save the sync and filtered data
+       second: int representing the segmentation window in seconds
 
-    Description: Segmentation of data at 1 second window with 50% overlap
+    Returns: dictionary of DataFrames with butterworth filtered signals
+
+    Description: Segmentation of data at specific second window with 50% overlap
+                 Save segmented data into .csv files
+                 Directory path_to_data/segmentData
     """
+
     def segmentation(data):
-        overlap = int(50*second*0.5)  # 50% overlap
+        """
+        Args:
+            data: DataSeries with single-axes sensor measurements
 
+        Returns: DataFrame with segmented timeseries of single-axes sensor measurements
+        """
+
+        # ## Define 50% overlap window
+        overlap = int(50*second*0.5)
+
+        # ## Initialise a df with the segmented window
         segmented = pd.DataFrame([data[:int(50*second)].values])
+        # ## Defne the duration of the segment
         duration = int(50*second)
+        # ## Calculate segments with overlap
         while duration < len(data):
             segment = pd.DataFrame([data[duration-overlap: duration+overlap].values])
             segmented = pd.concat([segmented, segment], axis=0)
@@ -139,27 +156,34 @@ def segment_data(accData, gyroData, path, second=1):
 
         return segmented
 
-    dict_keys = list(accData.keys())
-    for key in dict_keys:
-        current_path = os.path.join('../', 'data', 'watch', 'segmentData', str(second) + 's', path[30:], key)
-        make_sure_path_exists(current_path)
-        acc_x = segmentation(accData[key]['x'])
-        acc_y = segmentation(accData[key]['y'])
-        acc_z = segmentation(accData[key]['z'])
-        gyro_x = segmentation(gyroData[key]['x'])
-        gyro_y = segmentation(gyroData[key]['y'])
-        gyro_z = segmentation(gyroData[key]['z'])
+    activity_keys = list(rawData.keys())
+    for key in activity_keys:
+        cur_path = os.path.join(path, 'segmentData', user, activity, key)
+        make_sure_path_exists(cur_path)
+        activity_data = rawData[key]
+        time_dict = {}
 
-        time = pd.concat([accData[key]['time'], gyroData[key]['time']], axis=1)
-        time.columns = ['acc_time', 'gyro_time']
+        # Get raw measurements for each sensor
+        # Apply segmentation in ech axes separately
+        for s in activity_data.keys():
+            time_dict[s+'_unsync_time'] = activity_data[s]['unsync_time']
+            time_dict['time'] = activity_data[s]['time']
 
-        acc_x.to_csv(current_path + '/accData_x.csv', index=False)
-        acc_y.to_csv(current_path + '/accData_y.csv', index=False)
-        acc_z.to_csv(current_path + '/accData_z.csv', index=False)
-        gyro_x.to_csv(current_path + '/gyroData_x.csv', index=False)
-        gyro_y.to_csv(current_path + '/gyroData_y.csv', index=False)
-        gyro_z.to_csv(current_path + '/gyroData_z.csv', index=False)
-        time.to_csv(current_path + '/time.csv', index=False)
+            seg_x = segmentation(activity_data[s]['x'])
+            filename = os.path.join(cur_path, s + '_x.csv')
+            seg_x.to_csv(filename, index=False)
+
+            seg_y = segmentation(activity_data[s]['y'])
+            filename = os.path.join(cur_path, s + '_y.csv')
+            seg_y.to_csv(filename, index=False)
+
+            seg_z = segmentation(activity_data[s]['z'])
+            filename = os.path.join(cur_path, s + '_z.csv')
+            seg_z.to_csv(filename, index=False)
+
+        time = pd.DataFrame(time_dict)
+        filename = os.path.join(cur_path, 'time.csv')
+        time.to_csv(filename, index=False)
 
 
 def concat_data(accData, gyroData, path):
@@ -211,7 +235,7 @@ def concat_data(accData, gyroData, path):
     # print(labels.head())
     # print(acc_x.shape)
 
-    # ## Save final form of the data data
+    # ## Save final form of the data
     labels.to_csv(current_path + '/labels.csv', index=False, mode='a')
     acc_x.to_csv(current_path + '/acc_x.csv', index=False, mode='a')
     acc_y.to_csv(current_path + '/acc_y.csv', index=False, mode='a')
