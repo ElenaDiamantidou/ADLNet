@@ -5,6 +5,8 @@
 
   "sensors": ["acc", "gyr", "gravity"],
 
+  "sync" : "False",
+
   "segmentation_window": 3,
 
   "median": {

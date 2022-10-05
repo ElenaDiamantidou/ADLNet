@@ -28,6 +28,16 @@ def configuration():
     return json.load(open('../config.json'))
 
 
+# string to boolean function
+def str_to_bool(s):
+    if s == "True":
+        return True
+    elif s == "False":
+        return False
+    else:
+        return None
+
+
 if __name__ == '__main__':
 
     config = configuration()
@@ -38,7 +48,7 @@ if __name__ == '__main__':
     usernames = [user.split('/')[-1] for user in users]
 
     print("########################")
-    print('Synchronise Accelerometer & Gyroscope Data...')
+    print('Load and Synchronise Raw Data...')
     print()
     for user in usernames:
         # Parse paths for user activities
@@ -47,12 +57,25 @@ if __name__ == '__main__':
 
         for activity in activities_of_user:
             # Load activity data
-            print(user, ":", activity.split('/')[-1])
+            # print(user, ":", activity.split('/')[-1])
             # Load raw sensor measurements
             rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
+            if str_to_bool(config["sync"]):
+                # Synchronise data
+                process_data.synchronise(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
 
-            # Synchronise data
-            process_data.synchronise(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
+    #  ## Apply low-pass Butterworth filter
+    print("########################")
+    print('Apply Low-Pass Butterworth Filter...')
+    print()
+    for user in usernames:
+        path_to_sync_data = os.path.join(path_to_data, 'syncData')
+        activities_of_user = [os.path.join(path_to_sync_data, user, activity) for activity in
+                              os.listdir(os.path.join(path_to_sync_data, user))]
+
+        for activity in activities_of_user:
+            rawData = load_data.main(activity, '.csv', sensors=config["sensors"])
+            process_data.butterworth_filter(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
 
     # ## Apply Median filter at sync data
     print("########################")
@@ -67,17 +90,6 @@ if __name__ == '__main__':
     #         accData, gyroData = load_data.main(activity, '.csv')
     #         process_data.median_filter(accData, gyroData, path=activity)
     #
-    # #  ## Apply low-pass Butterworth filter
-    # print("########################")
-    # print('Apply Low-Pass Butterworth Filter...')
-    # print()
-    # for user in usernames:
-    #     path_to_sync_median_data = '../data/watch/medianData/'
-    #     activities_of_user = [os.path.join(path_to_sync_median_data, user, activity) for activity in
-    #                           os.listdir(path_to_sync_median_data + user)]
-    #     for activity in activities_of_user:
-    #         accData, gyroData = load_data.main(activity, '.csv')
-    #         process_data.butterworth_filter(accData, gyroData, path=activity)
     #
     # # ## Segment data
     # print("########################")

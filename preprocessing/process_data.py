@@ -1,9 +1,9 @@
 """
-Project Name : active_data
-Created on   : 02 Jul 2021
-author       : ediamantidou
-email        : ediamantidou@iti.gr
+Project Name : ADLNet
+author       : Eleni Diamantides
+email        : elenadiamantidou@gmail.com
 """
+
 import os, sys, errno
 
 import datetime
@@ -61,20 +61,30 @@ def median_filter(accData, gyroData, path, f_size=3):
         gyro_data_median.to_csv(current_path + '/gyroData.csv', index=False)
 
 
-def butterworth_filter(accData, gyroData, path):
+def butterworth_filter(rawData, user, activity, path):
     """
-    :param accData: median filtered accelerometer signal
-    :param gyroData: median filtered gyroscope signal
-    :param path: path of teh data
-    :return: dataframe with median + butterworth filter signal
+   Args:
+       rawData: dictionary of DataFrames with current user raw data of dictionaries with multi-sensor measurements
+       user: str containing the id of user
+       activity: str of activity
+       path: path to directory to save the sync data
 
-    Description: Apply 3rd order low-pass filter with 20Hz cutOff frequency
-    """
+   Returns: dictionary of DataFrames with butterworth filtered signals
+
+   Description: Apply 3rd order low-pass filter with 20Hz cutOff frequency
+   """
 
     def butterworth(data):
         """
-        :param data: input signal after median filter
-        :return: signal applied with 3rd order low-pass filter, 20Hz cutoff freq
+
+        Args:
+            data: DataSeries of single axes raw measurements
+
+        Returns: Numpy Array of low pass filtered signal
+
+        Description: Signal applied with 3rd order low-pass filter, 20Hz cutoff freq
+                     Save filtered data into .csv files
+                     Directory path_to_data/butterworthData
         """
         # Creation of the filter
         cutOff = 20  # Cutoff freq
@@ -87,40 +97,32 @@ def butterworth_filter(accData, gyroData, path):
 
         return output
 
-    dict_keys = list(accData.keys())
-    for key in dict_keys:
+    activity_keys = list(rawData.keys())
+    for key in activity_keys:
+        cur_path = os.path.join(path, 'butterworthData', user, activity, key)
+        make_sure_path_exists(cur_path)
+        sensor_keys = rawData[key].keys()
+        activity_data = rawData[key]
 
-        current_path = os.path.join('../', 'data', 'watch', 'butterworthData', path[25:], key)
-        make_sure_path_exists(current_path)
-        acc_data = accData[key]
-        gyro_data = gyroData[key]
+        # Get raw measurements for each sensor
+        for s in activity_data.keys():
+            butter_x = butterworth(activity_data[s]['x'])
+            butter_y = butterworth(activity_data[s]['y'])
+            butter_z = butterworth(activity_data[s]['z'])
 
-        acc_data_butter_x = butterworth(acc_data['x'])
-        acc_data_butter_y = butterworth(acc_data['y'])
-        acc_data_butter_z = butterworth(acc_data['z'])
-        gyro_data_butter_x = butterworth(gyro_data['x'])
-        gyro_data_butter_y = butterworth(gyro_data['y'])
-        gyro_data_butter_z = butterworth(gyro_data['z'])
+            data_butter = pd.DataFrame({'x': butter_x, 'y': butter_y, 'z': butter_z,
+                                        'time': activity_data[s]['time'],
+                                        'unsync_time': activity_data[s]['unsync_time']})
 
-        acc_data_butter = pd.DataFrame({'x': acc_data_butter_x, 'y': acc_data_butter_y,
-                                        'z': acc_data_butter_z, 'time': acc_data['time']})
-        gyro_data_butter = pd.DataFrame({'x': gyro_data_butter_x, 'y': gyro_data_butter_y,
-                                         'z': gyro_data_butter_z, 'time': gyro_data['time']})
-        path_save_vis = os.path.join(path[16:], key)
-
-        # visualise_data.plot_raw_data(acc_data_butter, gyro_data_butter, 'butterworth_data_visualisations', path_save_vis)
-        # ## Save median+butterworth filtered data
-        acc_data_butter.to_csv(current_path + '/accData.csv', index=False)
-        gyro_data_butter.to_csv(current_path + '/gyroData.csv', index=False)
-
-        # print(len(acc_data), len(gyro_data))
+            filename = os.path.join(cur_path, s + '.csv')
+            data_butter.to_csv(filename, index=False)
 
 
 def segment_data(accData, gyroData, path, second=1):
     """
     :param accData: filtered accelerometer signal
     :param gyroData: filtered gyroscope signal
-    :param path: path of teh data
+    :param path: path of the data
     :param second: segmentation time
     :return: dataframe with sensor data of activity
 

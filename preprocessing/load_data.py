@@ -65,7 +65,6 @@ def parse_raw_data(path_to_data, sensors):
     return rawData
 
 
-
 def parse_csv_raw_data(path_to_data, sensors):
     """
     Args:
@@ -76,31 +75,13 @@ def parse_csv_raw_data(path_to_data, sensors):
 
     """
     rawData = {}
+
     activity_label = path_to_data.split('/')[-1]
     for activity in os.listdir(path_to_data):
-        raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s + 'Data.csv')) for s in sensors}
-        for s in raw.keys():
-            raw[s].columns = ['x', 'y', 'z', 'time']
-            raw[s]['time'] = pd.to_datetime(raw[s]['time'])
-
+        raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s + '.csv')) for s in sensors}
         rawData[activity] = raw
 
     return rawData
-
-
-def parse_gyro_data(path_to_data):
-    gyroData = {}
-    for activity in os.listdir(path_to_data):
-        data = pd.read_csv(os.path.join(path_to_data, activity, 'gyrData.txt'), delimiter=' ', header=None)
-        data.columns = ['x', 'y', 'z', 'time']
-        data['x'] = data['x'].str.replace(',', '.').astype(float)
-        data['y'] = data['y'].str.replace(',', '.').astype(float)
-        data['z'] = data['z'].str.replace(',', '.').astype(float)
-
-        data['time'] = pd.to_datetime(data['time'])
-        gyroData[activity] = data
-
-    return gyroData
 
 
 def parse_axes_data(path_to_data):
