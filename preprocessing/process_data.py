@@ -22,12 +22,15 @@ def make_sure_path_exists(path):
             raise
 
 
-def median_filter(accData, gyroData, path, f_size=3):
+def median_filter(rawData, user, activity, path, f_size=3):
     """
-    :param accData: sync accelerometer signal
-    :param gyroData: sync gyroscope signal
-    :param path: path of the data
-    :return: dataframe with sync filter signal
+    Args:
+       rawData: dictionary of DataFrames with current user (low pass filtered) raw data of dictionaries with multi-sensor measurements
+       user: str containing the id of user
+       activity: str of activity
+       path: path to directory to save the sync data
+
+    Returns: dictionary of DataFrames with median filtered signals
 
     Description: Apply median filter to the signal for noise reduction
     """
@@ -39,31 +42,26 @@ def median_filter(accData, gyroData, path, f_size=3):
             f_data[:, i] = signal.medfilt(data[:, i], f_size)
         return f_data
 
-    dict_keys = list(accData.keys())
-    for key in dict_keys:
-        current_path = os.path.join('../', 'data', 'watch', 'medianData', path[23:], key)
-        make_sure_path_exists(current_path)
+    activity_keys = list(rawData.keys())
+    for key in activity_keys:
+        cur_path = os.path.join(path, 'medianData', user, activity, key)
+        make_sure_path_exists(cur_path)
+        sensor_keys = rawData[key].keys()
+        activity_data = rawData[key]
 
-        acc_data = accData[key]
-        gyro_data = gyroData[key]
-        acc_data_median = median(acc_data[['x', 'y', 'z']].values)
-        gyro_data_median = median(gyro_data[['x', 'y', 'z']].values)
+        # Get raw measurements for each sensor
+        for s in activity_data.keys():
+            data_median = pd.DataFrame(activity_data[s], columns=['x', 'y', 'z'])
+            data_median['time'] = activity_data[s]['time']
+            data_median['unsync_time'] = activity_data[s]['unsync_time']
 
-        acc_data_median = pd.DataFrame(acc_data_median, columns=['x', 'y', 'z'])
-        acc_data_median['time'] = acc_data['time']
-        gyro_data_median = pd.DataFrame(gyro_data_median, columns=['x', 'y', 'z'])
-        gyro_data_median['time'] = gyro_data['time']
-        path_save_vis = os.path.join(path[14:], key)
-
-        # visualise_data.plot_raw_data(acc_data_median, gyro_data_median, 'median_data_visualisations', path_save_vis)
-        # ## Save median filtered data
-        acc_data_median.to_csv(current_path + '/accData.csv', index=False)
-        gyro_data_median.to_csv(current_path + '/gyroData.csv', index=False)
+            filename = os.path.join(cur_path, s + '.csv')
+            data_median.to_csv(filename, index=False)
 
 
 def butterworth_filter(rawData, user, activity, path):
     """
-   Args:
+    Args:
        rawData: dictionary of DataFrames with current user raw data of dictionaries with multi-sensor measurements
        user: str containing the id of user
        activity: str of activity

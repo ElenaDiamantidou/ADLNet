@@ -68,29 +68,30 @@ if __name__ == '__main__':
     print("########################")
     print('Apply Low-Pass Butterworth Filter...')
     print()
-    for user in usernames:
-        path_to_sync_data = os.path.join(path_to_data, 'syncData')
-        activities_of_user = [os.path.join(path_to_sync_data, user, activity) for activity in
-                              os.listdir(os.path.join(path_to_sync_data, user))]
+    if str_to_bool(config["butter"]):
+        for user in usernames:
+            path_to_sync_data = os.path.join(path_to_data, 'syncData')
+            activities_of_user = [os.path.join(path_to_sync_data, user, activity) for activity in
+                                  os.listdir(os.path.join(path_to_sync_data, user))]
 
-        for activity in activities_of_user:
-            rawData = load_data.main(activity, '.csv', sensors=config["sensors"])
-            process_data.butterworth_filter(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
+            for activity in activities_of_user:
+                rawData = load_data.main(activity, '.csv', sensors=config["sensors"])
+                process_data.butterworth_filter(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
 
     # ## Apply Median filter at sync data
     print("########################")
     print('Apply Median Filter...')
     print()
+    if str_to_bool(config["median"]["flag"]):
+        for user in usernames:
+            path_to_sync_data = os.path.join(path_to_data, 'butterworthData')
+            activities_of_user = [os.path.join(path_to_sync_data, user, activity) for activity in
+                                  os.listdir(os.path.join(path_to_sync_data, user))]
+            for activity in activities_of_user:
+                rawData = load_data.main(activity, '.csv', sensors=config["sensors"])
+                process_data.median_filter(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data,
+                                           f_size=config["median"]["size"])
 
-    # for user in usernames:
-    #     path_to_sync_data = '../data/watch/syncData/'
-    #     activities_of_user = [os.path.join(path_to_sync_data, user, activity) for activity in
-    #                           os.listdir(path_to_sync_data + user)]
-    #     for activity in activities_of_user:
-    #         accData, gyroData = load_data.main(activity, '.csv')
-    #         process_data.median_filter(accData, gyroData, path=activity)
-    #
-    #
     # # ## Segment data
     # print("########################")
     # print('Segmentation of data...')

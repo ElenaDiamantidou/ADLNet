@@ -7,10 +7,12 @@
 
   "sync" : "False",
 
-  "segmentation_window": 3,
+  "butter" : "False",
 
   "median": {
     "flag": "True",
-    "window":4
-  }
+    "size":4
+  },
+
+  "segmentation_window": 3
 }
