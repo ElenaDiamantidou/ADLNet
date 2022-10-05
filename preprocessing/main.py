@@ -47,19 +47,18 @@ if __name__ == '__main__':
 
         for activity in activities_of_user:
             # Load activity data
-            print(user, activity)
+            print(user, ":", activity.split('/')[-1])
             # Load raw sensor measurements
             rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
 
             # Synchronise data
-            process_data.synchronise(rawData, user=user, path=path_to_data)
+            process_data.synchronise(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
 
-    # # ## Apply Median filter at sync data
-    # print("########################")
-    # print('Apply Median Filter...')
-    # print()
-    # input()
-    #
+    # ## Apply Median filter at sync data
+    print("########################")
+    print('Apply Median Filter...')
+    print()
+
     # for user in usernames:
     #     path_to_sync_data = '../data/watch/syncData/'
     #     activities_of_user = [os.path.join(path_to_sync_data, user, activity) for activity in

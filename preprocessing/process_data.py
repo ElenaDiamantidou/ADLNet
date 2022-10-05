@@ -298,11 +298,12 @@ def get_sync_data(sync_time, raw_data):
     return sync_data
 
 
-def synchronise(rawData, user, path):
+def synchronise(rawData, user, activity, path):
     """
     Args:
         rawData: dictionary with current user raw data of dictionaries with multi-sensor measurements
         user: str containing the id of user
+        activity: str of activity
         path: path to directory to save the sync data
 
     Returns: Sync data from all raw sensor measurements
@@ -312,7 +313,7 @@ def synchronise(rawData, user, path):
 
     activity_keys = list(rawData.keys())
     for key in activity_keys:
-        cur_path = os.path.join(path, 'syncData', user, key)
+        cur_path = os.path.join(path, 'syncData', user, activity, key)
         make_sure_path_exists(cur_path)
         sensor_keys = rawData[key].keys()
         activity_data = rawData[key]
@@ -340,6 +341,7 @@ def synchronise(rawData, user, path):
             #     acc_data = acc_data.drop([0]).reset_index(drop=True)
 
             for k in activity_data.keys():
+                # print(sync_time)
                 filename = os.path.join(cur_path, k + '.csv')
                 syncData = get_sync_data(sync_time, activity_data[k][['x', 'y', 'z', 'time']])
                 syncData.to_csv(filename, index=False)

@@ -46,18 +46,24 @@ def parse_raw_data(path_to_data, sensors):
     activity_label = path_to_data.split('/')[-1]
 
     for activity in os.listdir(path_to_data):
-        raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s+'Data.txt'),
-                              delimiter=' ', header=None) for s in sensors}
-        for s in raw.keys():
-            raw[s].columns = ['x', 'y', 'z', 'time']
-            raw[s]['time'] = pd.to_datetime(raw[s]['time'])
-            raw[s]['x'] = raw[s]['x'].str.replace(',', '.').astype(float)
-            raw[s]['y'] = raw[s]['y'].str.replace(',', '.').astype(float)
-            raw[s]['z'] = raw[s]['z'].str.replace(',', '.').astype(float)
+        try:
+            raw = {s: pd.read_csv(os.path.join(path_to_data, activity, s+'Data.txt'),
+                                  delimiter=' ', header=None) for s in sensors}
 
-        rawData[activity] = raw
+            for s in raw.keys():
+                raw[s].columns = ['x', 'y', 'z', 'time']
+                raw[s]['time'] = pd.to_datetime(raw[s]['time'])
+                raw[s]['x'] = raw[s]['x'].str.replace(',', '.').astype(float)
+                raw[s]['y'] = raw[s]['y'].str.replace(',', '.').astype(float)
+                raw[s]['z'] = raw[s]['z'].str.replace(',', '.').astype(float)
+                # print(os.path.join(path_to_data, activity, s+'Data.txt'))
+                # print(raw[s].head())
+            rawData[activity] = raw
+        except:
+            pass
 
     return rawData
+
 
 
 def parse_csv_raw_data(path_to_data, sensors):
