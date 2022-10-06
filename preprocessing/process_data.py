@@ -205,16 +205,21 @@ def concat_data(axesData, user, activity, path, sensors):
     print()
     print(user, activity)
     # initialise DataFrames to store data from the same activity
-    x, y, z = (pd.DataFrame() for _ in range(3))
+    data = {}
+    for s in sensors:
+        data[s] = {s+'_x': pd.DataFrame(), s+'_y': pd.DataFrame(), s+'_z': pd.DataFrame()}
+
+    # x, y, z = {pd.DataFrame()}, {pd.DataFrame()}, {pd.DataFrame()}({s: pd.DataFrame()} for s in sensors)
     for key in activity_keys:
         cur_path = os.path.join(path, 'mergeData', user, activity)
         make_sure_path_exists(cur_path)
-        print(key)
         activity_data = axesData[key]
         for s in sensors:
-            print(s+'_x', s+'_y', s+'_z')
-            print(activity_data[s+'_z'])
-            sys.exit()
+            data[s][s+'_x'] = pd.concat([data[s][s+'_x'], activity_data[s+'_x']], axis=0)
+            data[s][s+'_y'] = pd.concat([data[s][s+'_y'], activity_data[s+'_y']], axis=0)
+            data[s][s+'_z'] = pd.concat([data[s][s+'_z'], activity_data[s+'_z']], axis=0)
+
+
         # for s in activity_data.keys():
         #
         #     # x = pd.concat([x, activity_data[s]], axis=0)
