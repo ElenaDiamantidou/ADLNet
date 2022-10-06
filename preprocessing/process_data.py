@@ -158,7 +158,7 @@ def segment_data(rawData, user, activity, path, second=1):
 
     activity_keys = list(rawData.keys())
     for key in activity_keys:
-        cur_path = os.path.join(path, 'segmentData', user, activity, key)
+        cur_path = os.path.join(path, 'segmentData', str(second) + 's', user, activity, key)
         make_sure_path_exists(cur_path)
         activity_data = rawData[key]
         time_dict = {}
@@ -186,63 +186,78 @@ def segment_data(rawData, user, activity, path, second=1):
         time.to_csv(filename, index=False)
 
 
-def concat_data(accData, gyroData, path):
+def concat_data(axesData, user, activity, path, sensors):
     """
-    :param accData: filtered accelerometer signal
-    :param gyroData: filtered gyroscope signal
-    :param path: path of teh data
-    :return: dataframe with sensor data of activity
+    Args:
+       axesData: dictionary of DataFrames with current user raw data of dictionaries with single-axes sensor measurements
+       user: str containing the id of user
+       activity: str of activity
+       path: path to directory to save the sync and filtered data
 
-    Description: Concatenate data from one activity
+    Returns: dictionary of DataFrames with butterworth filtered signals
+
+    Description: Concatenate sensor data that represent the same activity
+                 Save segmented data into .csv files
+                 Directory path_to_data/mergeData
     """
 
-    dict_keys = list(accData.keys())
-    acc_x, acc_y, acc_z = (pd.DataFrame() for _ in range(3))
-    gyro_x, gyro_y, gyro_z = (pd.DataFrame() for _ in range(3))
-    labels = []
+    activity_keys = list(axesData.keys())
+    print()
+    print(user, activity)
+    # initialise DataFrames to store data from the same activity
+    x, y, z = (pd.DataFrame() for _ in range(3))
+    for key in activity_keys:
+        cur_path = os.path.join(path, 'mergeData', user, activity)
+        make_sure_path_exists(cur_path)
+        print(key)
+        activity_data = axesData[key]
+        for s in sensors:
+            print(s+'_x', s+'_y', s+'_z')
+            print(activity_data[s+'_z'])
+            sys.exit()
+        # for s in activity_data.keys():
+        #
+        #     # x = pd.concat([x, activity_data[s]], axis=0)
+        #     # y = pd.concat([y, activity_data[s]], axis=0)
+        #     # z = pd.concat([z, activity_data[s]], axis=0)
+        #     print(s)
+    sys.exit()
+    # dict_keys = list(accData.keys())
 
-    ext = os.path.join(path.split('/')[-3], path.split('/')[-2], path.split('/')[-1])
-    current_path = os.path.join('../', 'data', 'watch', 'mergeData',  ext)
-    make_sure_path_exists(current_path)
-
-    for key in dict_keys:
-        acc_data = accData[key]
-        gyro_data = gyroData[key]
-        len_of_samples = len(acc_data['x'])
-        acc_x = pd.concat([acc_x, acc_data['x']], axis=0)
-        acc_y = pd.concat([acc_y, acc_data['y']], axis=0)
-        acc_z = pd.concat([acc_z, acc_data['z']], axis=0)
-        gyro_x = pd.concat([gyro_x, gyro_data['x']], axis=0)
-        gyro_y = pd.concat([gyro_y, gyro_data['y']], axis=0)
-        gyro_z = pd.concat([gyro_z, gyro_data['z']], axis=0)
-
-        # keep the label based on the ground truth label
-        body_state = ['sitting', 'standing', 'walking']
-        label = key.split('_')[2:]
-        if True in [bs in label for bs in body_state]:
-            if label[0] in body_state:
-                # re-order to set body_state at the end
-                # label[1:].append()
-                activity = ' '.join(label[1:])
-                locomotion = label[0]
-                label = '_'.join([activity, locomotion])
-        if len(label) == 1:
-            label = label[0]
-        if len(label) == 2 and label != 'answer_phone':
-            label = '_'.join(label)
-        labels.extend([label]*len_of_samples)
-    labels = pd.DataFrame(labels)
-    # print(labels.head())
-    # print(acc_x.shape)
-
-    # ## Save final form of the data
-    labels.to_csv(current_path + '/labels.csv', index=False, mode='a')
-    acc_x.to_csv(current_path + '/acc_x.csv', index=False, mode='a')
-    acc_y.to_csv(current_path + '/acc_y.csv', index=False, mode='a')
-    acc_z.to_csv(current_path + '/acc_z.csv', index=False, mode='a')
-    gyro_x.to_csv(current_path + '/gyro_x.csv', index=False, mode='a')
-    gyro_y.to_csv(current_path + '/gyro_y.csv', index=False, mode='a')
-    gyro_z.to_csv(current_path + '/gyro_z.csv', index=False, mode='a')
+    # labels = []
+    #
+    # for key in dict_keys:
+    #     acc_data = accData[key]
+    #     gyro_data = gyroData[key]
+    #     len_of_samples = len(acc_data['x'])
+    #
+    #     # keep the label based on the ground truth label
+    #     body_state = ['sitting', 'standing', 'walking']
+    #     label = key.split('_')[2:]
+    #     if True in [bs in label for bs in body_state]:
+    #         if label[0] in body_state:
+    #             # re-order to set body_state at the end
+    #             # label[1:].append()
+    #             activity = ' '.join(label[1:])
+    #             locomotion = label[0]
+    #             label = '_'.join([activity, locomotion])
+    #     if len(label) == 1:
+    #         label = label[0]
+    #     if len(label) == 2 and label != 'answer_phone':
+    #         label = '_'.join(label)
+    #     labels.extend([label]*len_of_samples)
+    # labels = pd.DataFrame(labels)
+    # # print(labels.head())
+    # # print(acc_x.shape)
+    #
+    # # ## Save final form of the data
+    # labels.to_csv(current_path + '/labels.csv', index=False, mode='a')
+    # acc_x.to_csv(current_path + '/acc_x.csv', index=False, mode='a')
+    # acc_y.to_csv(current_path + '/acc_y.csv', index=False, mode='a')
+    # acc_z.to_csv(current_path + '/acc_z.csv', index=False, mode='a')
+    # gyro_x.to_csv(current_path + '/gyro_x.csv', index=False, mode='a')
+    # gyro_y.to_csv(current_path + '/gyro_y.csv', index=False, mode='a')
+    # gyro_z.to_csv(current_path + '/gyro_z.csv', index=False, mode='a')
 
 
 def save_data(activities_of_user, second):

@@ -23,16 +23,6 @@ def parde_dir(path_to_data):
     return directories
 
 
-def parse_data(second):
-    path_to_data = '../data/watch/data/' + str(second) + 's'
-    directories = []
-
-    for directory in os.listdir(path_to_data):
-        directories.append(os.path.join(path_to_data, directory))
-
-    return directories
-
-
 def parse_raw_data(path_to_data, sensors):
     """
     Args:
@@ -84,21 +74,26 @@ def parse_csv_raw_data(path_to_data, sensors):
     return rawData
 
 
-def parse_axes_data(path_to_data):
-    accData, gyroData = {}, {}
-    for activity in os.listdir(path_to_data):
-        acc_x = pd.read_csv(os.path.join(path_to_data, activity, 'accData_x.csv'))
-        acc_y = pd.read_csv(os.path.join(path_to_data, activity, 'accData_y.csv'))
-        acc_z = pd.read_csv(os.path.join(path_to_data, activity, 'accData_z.csv'))
-        gyro_x = pd.read_csv(os.path.join(path_to_data, activity, 'gyroData_x.csv'))
-        gyro_y = pd.read_csv(os.path.join(path_to_data, activity, 'gyroData_y.csv'))
-        gyro_z = pd.read_csv(os.path.join(path_to_data, activity, 'gyroData_z.csv'))
-        data = {'x': acc_x, 'y': acc_y, 'z': acc_z}
-        accData[activity] = data
-        data = {'x': gyro_x, 'y': gyro_y, 'z': gyro_z}
-        gyroData[activity] = data
+def parse_axes_data(path_to_data, sensors):
+    """
+    Args:
+        path_to_data: str path to load single-axes sensor measurements
+        sensors: list of str sensors to load raw measurements
 
-    return accData, gyroData
+    Returns: dictionary of DataFrames with single-axes sensor measurements
+
+    """
+    axesData = {}
+    for activity in os.listdir(path_to_data):
+        activityData = {}
+        for s in sensors:
+            activityData[s + '_x'] = pd.read_csv(os.path.join(path_to_data, activity, s+'_x.csv'))
+            activityData[s + '_y'] = pd.read_csv(os.path.join(path_to_data, activity, s+'_y.csv'))
+            activityData[s + '_z'] = pd.read_csv(os.path.join(path_to_data, activity, s+'_z.csv'))
+        activityData['time'] = pd.read_csv(os.path.join(path_to_data, activity, 'time.csv'))
+        axesData[activity] = activityData
+
+    return axesData
 
 
 def main(activity_data, data_format, sensors):
