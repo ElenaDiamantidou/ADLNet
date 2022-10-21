@@ -5,12 +5,12 @@
 
   "sensors": ["acc", "gyr", "gravity"],
 
-  "sync" : "False",
+  "sync" : "True",
 
-  "butter" : "False",
+  "butter" : "True",
 
   "median": {
-    "flag": "False",
+    "flag": "True",
     "size":4
   },
 

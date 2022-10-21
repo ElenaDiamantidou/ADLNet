@@ -6,6 +6,7 @@ email        : elenadiamantidou@gmail.com
 import sys, os
 import json
 import pandas as pd
+import shutil
 
 import load_data, process_data
 
@@ -47,22 +48,48 @@ if __name__ == '__main__':
     users = load_data.parde_dir(path_to_data=path_to_raw_data)
     usernames = [user.split('/')[-1] for user in users]
 
+    # ## Rename the directories
+    for user in usernames:
+        # Parse paths for user activities
+        activities_of_user = [os.path.join(path_to_raw_data, user, activity) for activity in
+                              os.listdir(os.path.join(path_to_raw_data, user))]
+
+        for activity in activities_of_user:
+            # Load activity data
+            for event in os.listdir(activity):
+                # noob split
+                date = event[:10]
+                time = event[11:19]
+                act = event[20:]
+
+                # replace '-' with ':'
+                time = time.replace("_", ":")
+
+                re_event = "_".join([date, time, act])
+
+                src = os.path.join(activity, event)
+                dst = os.path.join(activity, re_event)
+
+                # rename if necessary
+                # shutil.move(src, dst)
+                os.rename(src, dst)
+
     print("########################")
     print('Load and Synchronise Raw Data...')
     print()
-    # for user in usernames:
-    #     # Parse paths for user activities
-    #     activities_of_user = [os.path.join(path_to_raw_data, user, activity) for activity in
-    #                           os.listdir(os.path.join(path_to_raw_data, user))]
-    #
-    #     for activity in activities_of_user:
-    #         # Load activity data
-    #         # print(user, ":", activity.split('/')[-1])
-    #         # Load raw sensor measurements
-    #         rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
-    #         if str_to_bool(config["sync"]):
-    #             # Synchronise data
-    #             process_data.synchronise(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
+    for user in usernames:
+        # Parse paths for user activities
+        activities_of_user = [os.path.join(path_to_raw_data, user, activity) for activity in
+                              os.listdir(os.path.join(path_to_raw_data, user))]
+
+        for activity in activities_of_user:
+            # Load activity data
+            # print(user, ":", activity.split('/')[-1])
+            # Load raw sensor measurements
+            rawData = load_data.main(activity, data_format=config["data_format"], sensors=config["sensors"])
+            if str_to_bool(config["sync"]):
+                # Synchronise data
+                process_data.synchronise(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data)
 
     #  ## Apply low-pass Butterworth filter
     print("########################")
@@ -91,7 +118,6 @@ if __name__ == '__main__':
                 rawData = load_data.main(activity, '.csv', sensors=config["sensors"])
                 process_data.median_filter(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data,
                                            f_size=config["median"]["size"])
-
     # # ## Segment data
     # print("########################")
     # print('Segmentation of data...')
@@ -109,15 +135,15 @@ if __name__ == '__main__':
     #                                   second=config["segmentation_window"])
 
     # ## Concatenate data of the same activity
-    for user in usernames:
-        path_to_segment_data = os.path.join(path_to_data, 'segmentData', str(config["segmentation_window"]) + 's')
-
-        activities_of_user = [os.path.join(path_to_segment_data, user, activity) for activity in
-                              os.listdir(os.path.join(path_to_segment_data, user))]
-        for activity in activities_of_user:
-            axesData = load_data.parse_axes_data(activity, sensors=config["sensors"])
-            process_data.concat_data(axesData, user=user, activity=activity.split('/')[-1], path=path_to_data,
-                                     sensors=config["sensors"])
+    # for user in usernames:
+    #     path_to_segment_data = os.path.join(path_to_data, 'segmentData', str(config["segmentation_window"]) + 's')
+    #
+    #     activities_of_user = [os.path.join(path_to_segment_data, user, activity) for activity in
+    #                           os.listdir(os.path.join(path_to_segment_data, user))]
+    #     for activity in activities_of_user:
+    #         axesData = load_data.parse_axes_data(activity, sensors=config["sensors"])
+    #         process_data.concat_data(axesData, user=user, activity=activity.split('/')[-1], path=path_to_data,
+    #                                  sensors=config["sensors"])
 
     # #  ## Save data at a final CSV
     # print()

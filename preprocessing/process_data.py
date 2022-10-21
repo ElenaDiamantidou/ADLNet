@@ -219,25 +219,28 @@ def concat_data(axesData, user, activity, path, sensors):
             data[s][s+'_y'] = pd.concat([data[s][s+'_y'], activity_data[s+'_y']], axis=0)
             data[s][s+'_z'] = pd.concat([data[s][s+'_z'], activity_data[s+'_z']], axis=0)
 
+    for key in activity_keys:
+        # print(axesData[key].keys())
+        # define body states
+        body_state = ['sitting', 'standing', 'walking', 'stand', 'sit', 'walk']
+        # isolate label from the filename
+        label = key.split('_')[2:]
 
-        # for s in activity_data.keys():
-        #
-        #     # x = pd.concat([x, activity_data[s]], axis=0)
-        #     # y = pd.concat([y, activity_data[s]], axis=0)
-        #     # z = pd.concat([z, activity_data[s]], axis=0)
-        #     print(s)
-    sys.exit()
-    # dict_keys = list(accData.keys())
-
-    # labels = []
-    #
-    # for key in dict_keys:
+        if True in [bs in label for bs in body_state]:
+            if label[0] in body_state:
+                # re-order to set body_state at the end
+                # label[1:].append()
+                activity = ' '.join(label[1:])
+                locomotion = label[0]
+                label = '_'.join([activity, locomotion])
+        else:
+            print(label)
+    # sys.exit()
     #     acc_data = accData[key]
     #     gyro_data = gyroData[key]
     #     len_of_samples = len(acc_data['x'])
     #
     #     # keep the label based on the ground truth label
-    #     body_state = ['sitting', 'standing', 'walking']
     #     label = key.split('_')[2:]
     #     if True in [bs in label for bs in body_state]:
     #         if label[0] in body_state:
