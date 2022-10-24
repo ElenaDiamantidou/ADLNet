@@ -5,14 +5,16 @@
 
   "sensors": ["acc", "gyr", "gravity"],
 
-  "sync" : "True",
+  "sync" : "False",
 
-  "butter" : "True",
+  "butter" : "False",
 
   "median": {
-    "flag": "True",
+    "flag": "False",
     "size":4
   },
+
+  "segmentation": "False",
 
   "segmentation_window": 3
 }

@@ -210,22 +210,23 @@ def concat_data(axesData, user, activity, path, sensors):
         data[s] = {s+'_x': pd.DataFrame(), s+'_y': pd.DataFrame(), s+'_z': pd.DataFrame()}
 
     # x, y, z = {pd.DataFrame()}, {pd.DataFrame()}, {pd.DataFrame()}({s: pd.DataFrame()} for s in sensors)
+    cur_path = os.path.join(path, 'mergeData', user, activity)
+    make_sure_path_exists(cur_path)
     for key in activity_keys:
-        cur_path = os.path.join(path, 'mergeData', user, activity)
-        make_sure_path_exists(cur_path)
         activity_data = axesData[key]
         for s in sensors:
             data[s][s+'_x'] = pd.concat([data[s][s+'_x'], activity_data[s+'_x']], axis=0)
             data[s][s+'_y'] = pd.concat([data[s][s+'_y'], activity_data[s+'_y']], axis=0)
             data[s][s+'_z'] = pd.concat([data[s][s+'_z'], activity_data[s+'_z']], axis=0)
 
+    labels = []
     for key in activity_keys:
-        # print(axesData[key].keys())
+        len_of_samples = len(axesData[key]['acc_x'])
         # define body states
         body_state = ['sitting', 'standing', 'walking', 'stand', 'sit', 'walk']
         # isolate label from the filename
+        # keep the label based on the ground truth label
         label = key.split('_')[2:]
-
         if True in [bs in label for bs in body_state]:
             if label[0] in body_state:
                 # re-order to set body_state at the end
@@ -233,39 +234,24 @@ def concat_data(axesData, user, activity, path, sensors):
                 activity = ' '.join(label[1:])
                 locomotion = label[0]
                 label = '_'.join([activity, locomotion])
+            if len(label) == 1:
+                label = label[0]
+            if len(label) == 2 and label != 'answer_phone':
+                label = '_'.join(label)
         else:
-            print(label)
-    # sys.exit()
-    #     acc_data = accData[key]
-    #     gyro_data = gyroData[key]
-    #     len_of_samples = len(acc_data['x'])
-    #
-    #     # keep the label based on the ground truth label
-    #     label = key.split('_')[2:]
-    #     if True in [bs in label for bs in body_state]:
-    #         if label[0] in body_state:
-    #             # re-order to set body_state at the end
-    #             # label[1:].append()
-    #             activity = ' '.join(label[1:])
-    #             locomotion = label[0]
-    #             label = '_'.join([activity, locomotion])
-    #     if len(label) == 1:
-    #         label = label[0]
-    #     if len(label) == 2 and label != 'answer_phone':
-    #         label = '_'.join(label)
-    #     labels.extend([label]*len_of_samples)
-    # labels = pd.DataFrame(labels)
-    # # print(labels.head())
-    # # print(acc_x.shape)
-    #
-    # # ## Save final form of the data
-    # labels.to_csv(current_path + '/labels.csv', index=False, mode='a')
-    # acc_x.to_csv(current_path + '/acc_x.csv', index=False, mode='a')
-    # acc_y.to_csv(current_path + '/acc_y.csv', index=False, mode='a')
-    # acc_z.to_csv(current_path + '/acc_z.csv', index=False, mode='a')
-    # gyro_x.to_csv(current_path + '/gyro_x.csv', index=False, mode='a')
-    # gyro_y.to_csv(current_path + '/gyro_y.csv', index=False, mode='a')
-    # gyro_z.to_csv(current_path + '/gyro_z.csv', index=False, mode='a')
+            label = label[0]
+
+        labels.extend([label]*len_of_samples)
+
+    # Create final DataFrame with the ground truth labels
+    labels = pd.DataFrame(labels)
+    # cur_path = os.path.join(path, 'mergeData', user, activity)
+    for s in sensors:
+        # ## Save final form of the data
+        labels.to_csv(cur_path + '/labels.csv', index=False, mode='a')
+        data[s][s+'_x'].to_csv(cur_path + '/' + s + '_x.csv', index=False, mode='a')
+        data[s][s+'_y'].to_csv(cur_path + '/' + s + '_y.csv', index=False, mode='a')
+        data[s][s+'_z'].to_csv(cur_path + '/' + s + '_z.csv', index=False, mode='a')
 
 
 def save_data(activities_of_user, second):
@@ -275,7 +261,6 @@ def save_data(activities_of_user, second):
 
     user = activities_of_user[0].split('/')[-2]
     current_path = os.path.join('../', 'data', 'watch', 'data', str(second) + 's', user)
-    print(current_path)
     make_sure_path_exists(current_path)
 
     for activity_data in activities_of_user:
