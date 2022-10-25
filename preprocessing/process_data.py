@@ -193,7 +193,7 @@ def concat_data(axesData, user, activity, path, sensors):
        user: str containing the id of user
        activity: str of activity
        path: path to directory to save the sync and filtered data merged
-       sensors: list of sensor
+       sensors: list of sensors
 
     Returns: dictionary of DataFram    # cur_path = os.path.join(path, 'mergeData', user, activity)
 es with butterworth filtered signals
