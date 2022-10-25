@@ -139,27 +139,28 @@ if __name__ == '__main__':
                 process_data.segment_data(rawData, user=user, activity=activity.split('/')[-1], path=path_to_data,
                                           second=config["segmentation_window"])
 
-    # ## Concatenate data of the same activity
-    for user in usernames:
-        path_to_segment_data = os.path.join(path_to_data, 'segmentData', str(config["segmentation_window"]) + 's')
-
-        activities_of_user = [os.path.join(path_to_segment_data, user, activity) for activity in
-                              os.listdir(os.path.join(path_to_segment_data, user))]
-        for activity in activities_of_user:
-            axesData = load_data.parse_axes_data(activity, sensors=config["sensors"])
-            process_data.concat_data(axesData, user=user, activity=activity.split('/')[-1], path=path_to_data,
-                                     sensors=config["sensors"])
-
-    # #  ## Save data at a final CSV
-    # print()
-    # print("########################")
-    # print('Save data...')
-    # print()
+    # # ## Concatenate data of the same activity
     # for user in usernames:
-    #     path_to_axes_data = '../data/watch/mergeData/' + str(second) + 's/'
-    #     activities_of_user = [os.path.join(path_to_axes_data, user, activity) for activity in
-    #                           os.listdir(path_to_axes_data + user)]
-    #     process_data.save_data(activities_of_user, second)
+    #     path_to_segment_data = os.path.join(path_to_data, 'segmentData', str(config["segmentation_window"]) + 's')
+    #
+    #     activities_of_user = [os.path.join(path_to_segment_data, user, activity) for activity in
+    #                           os.listdir(os.path.join(path_to_segment_data, user))]
+    #     for activity in activities_of_user:
+    #         axesData = load_data.parse_axes_data(activity, sensors=config["sensors"])
+    #         process_data.concat_data(axesData, user=user, activity=activity.split('/')[-1], path=path_to_data,
+    #                                  sensors=config["sensors"])
+
+    #  ## Save data at a final CSV
+    print()
+    print("########################")
+    print('Save data...')
+    print()
+    for user in usernames:
+        path_to_merge_data = os.path.join(path_to_data, 'mergeData')
+        activities_of_user = [os.path.join(path_to_merge_data, user, activity) for activity in
+                              os.listdir(os.path.join(path_to_merge_data, user))]
+
+        process_data.save_data(activities_of_user, user, sensors=config["sensors"], path=path_to_data)
 
     print()
     print('Done.')

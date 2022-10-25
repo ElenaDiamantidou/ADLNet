@@ -141,15 +141,15 @@ def segment_data(rawData, user, activity, path, second=1):
         """
 
         # ## Define 50% overlap window
-        overlap = int(50*second*0.5)
+        overlap = int(50 * second * 0.5)
 
         # ## Initialise a df with the segmented window
-        segmented = pd.DataFrame([data[:int(50*second)].values])
+        segmented = pd.DataFrame([data[:int(50 * second)].values])
         # ## Defne the duration of the segment
-        duration = int(50*second)
+        duration = int(50 * second)
         # ## Calculate segments with overlap
         while duration < len(data):
-            segment = pd.DataFrame([data[duration-overlap: duration+overlap].values])
+            segment = pd.DataFrame([data[duration - overlap: duration + overlap].values])
             segmented = pd.concat([segmented, segment], axis=0)
             duration += overlap
         segmented = segmented.reset_index(drop=True)
@@ -166,7 +166,7 @@ def segment_data(rawData, user, activity, path, second=1):
         # Get raw measurements for each sensor
         # Apply segmentation in ech axes separately
         for s in activity_data.keys():
-            time_dict[s+'_unsync_time'] = activity_data[s]['unsync_time']
+            time_dict[s + '_unsync_time'] = activity_data[s]['unsync_time']
             time_dict['time'] = activity_data[s]['time']
 
             seg_x = segmentation(activity_data[s]['x'])
@@ -192,9 +192,11 @@ def concat_data(axesData, user, activity, path, sensors):
        axesData: dictionary of DataFrames with current user raw data of dictionaries with single-axes sensor measurements
        user: str containing the id of user
        activity: str of activity
-       path: path to directory to save the sync and filtered data
+       path: path to directory to save the sync and filtered data merged
+       sensors: list of sensor
 
-    Returns: dictionary of DataFrames with butterworth filtered signals
+    Returns: dictionary of DataFram    # cur_path = os.path.join(path, 'mergeData', user, activity)
+es with butterworth filtered signals
 
     Description: Concatenate sensor data that represent the same activity
                  Save segmented data into .csv files
@@ -207,7 +209,7 @@ def concat_data(axesData, user, activity, path, sensors):
     # initialise DataFrames to store data from the same activity
     data = {}
     for s in sensors:
-        data[s] = {s+'_x': pd.DataFrame(), s+'_y': pd.DataFrame(), s+'_z': pd.DataFrame()}
+        data[s] = {s + '_x': pd.DataFrame(), s + '_y': pd.DataFrame(), s + '_z': pd.DataFrame()}
 
     # x, y, z = {pd.DataFrame()}, {pd.DataFrame()}, {pd.DataFrame()}({s: pd.DataFrame()} for s in sensors)
     cur_path = os.path.join(path, 'mergeData', user, activity)
@@ -215,9 +217,9 @@ def concat_data(axesData, user, activity, path, sensors):
     for key in activity_keys:
         activity_data = axesData[key]
         for s in sensors:
-            data[s][s+'_x'] = pd.concat([data[s][s+'_x'], activity_data[s+'_x']], axis=0)
-            data[s][s+'_y'] = pd.concat([data[s][s+'_y'], activity_data[s+'_y']], axis=0)
-            data[s][s+'_z'] = pd.concat([data[s][s+'_z'], activity_data[s+'_z']], axis=0)
+            data[s][s + '_x'] = pd.concat([data[s][s + '_x'], activity_data[s + '_x']], axis=0)
+            data[s][s + '_y'] = pd.concat([data[s][s + '_y'], activity_data[s + '_y']], axis=0)
+            data[s][s + '_z'] = pd.concat([data[s][s + '_z'], activity_data[s + '_z']], axis=0)
 
     labels = []
     for key in activity_keys:
@@ -241,50 +243,69 @@ def concat_data(axesData, user, activity, path, sensors):
         else:
             label = label[0]
 
-        labels.extend([label]*len_of_samples)
+        labels.extend([label] * len_of_samples)
 
     # Create final DataFrame with the ground truth labels
     labels = pd.DataFrame(labels)
-    # cur_path = os.path.join(path, 'mergeData', user, activity)
+    labels.to_csv(cur_path + '/labels.csv', index=False)  # mode='a'
+    # ## Save final form of the data
     for s in sensors:
-        # ## Save final form of the data
-        labels.to_csv(cur_path + '/labels.csv', index=False, mode='a')
-        data[s][s+'_x'].to_csv(cur_path + '/' + s + '_x.csv', index=False, mode='a')
-        data[s][s+'_y'].to_csv(cur_path + '/' + s + '_y.csv', index=False, mode='a')
-        data[s][s+'_z'].to_csv(cur_path + '/' + s + '_z.csv', index=False, mode='a')
+        data[s][s + '_x'].to_csv(cur_path + '/' + s + '_x.csv', index=False)  # mode='a'
+        data[s][s + '_y'].to_csv(cur_path + '/' + s + '_y.csv', index=False)  # mode='a'
+        data[s][s + '_z'].to_csv(cur_path + '/' + s + '_z.csv', index=False)  # mode='a'
 
 
-def save_data(activities_of_user, second):
-    acc_x, acc_y, acc_z = (pd.DataFrame() for _ in range(3))
-    gyro_x, gyro_y, gyro_z = (pd.DataFrame() for _ in range(3))
+def save_data(activities_of_user, user, sensors, path):
+    """
+    Args:
+        activities_of_user: list of directories with user data
+        user: str containing the id of user
+        sensors: list of sensors
+        path: str path to directory to save final data
+
+    Returns: None
+
+    Description: Save final segmented and merged data into .csv files
+                 Directory path_to_data/data
+
+    """
+
+    cur_path = os.path.join(path, 'data', user)
+    make_sure_path_exists(cur_path)
+
+    data = {}
+    for s in sensors:
+        data[s+'_x'] = pd.DataFrame()
+        data[s+'_y'] = pd.DataFrame()
+        data[s+'_z'] = pd.DataFrame()
+
     labels = pd.DataFrame()
-
-    user = activities_of_user[0].split('/')[-2]
-    current_path = os.path.join('../', 'data', 'watch', 'data', str(second) + 's', user)
-    make_sure_path_exists(current_path)
-
     for activity_data in activities_of_user:
-        activity = activity_data.split('/')[-1]
-        # Read the data and merge them
-        acc_x = pd.concat([acc_x, pd.read_csv(activity_data + '/acc_x.csv')], axis=0)
-        acc_y = pd.concat([acc_y, pd.read_csv(activity_data + '/acc_y.csv')], axis=0)
-        acc_z = pd.concat([acc_z, pd.read_csv(activity_data + '/acc_z.csv')], axis=0)
-        gyro_x = pd.concat([gyro_x, pd.read_csv(activity_data + '/gyro_x.csv')], axis=0)
-        gyro_y = pd.concat([gyro_y, pd.read_csv(activity_data + '/gyro_y.csv')], axis=0)
-        gyro_z = pd.concat([gyro_z, pd.read_csv(activity_data + '/gyro_z.csv')], axis=0)
-        labels = pd.concat([labels, pd.read_csv(activity_data + '/labels.csv')], axis=0)
+        labels = pd.concat([labels, pd.read_csv(os.path.join(activity_data, 'labels.csv'))])
+        # print(labels)
+        for s in sensors:
+            data[s + '_x'] = pd.concat([data[s+'_x'], pd.read_csv(os.path.join(activity_data, s+'_x.csv'))], axis=0)
+            data[s + '_y'] = pd.concat([data[s+'_y'], pd.read_csv(os.path.join(activity_data, s+'_y.csv'))], axis=0)
+            data[s + '_z'] = pd.concat([data[s+'_z'], pd.read_csv(os.path.join(activity_data, s+'_z.csv'))], axis=0)
 
     # ## Save final form of the data
-    acc_x.to_csv(current_path + '/acc_x.csv', index=False, mode='a')
-    acc_y.to_csv(current_path + '/acc_y.csv', index=False, mode='a')
-    acc_z.to_csv(current_path + '/acc_z.csv', index=False, mode='a')
-    gyro_x.to_csv(current_path + '/gyro_x.csv', index=False, mode='a')
-    gyro_y.to_csv(current_path + '/gyro_y.csv', index=False, mode='a')
-    gyro_z.to_csv(current_path + '/gyro_z.csv', index=False, mode='a')
-    labels.to_csv(current_path + '/labels.csv', index=False, mode='a')
+    labels.to_csv(os.path.join(cur_path, 'labels.csv'), index=False)
+    for s in sensors:
+        data[s + '_x'].to_csv(os.path.join(cur_path, s + '_x.csv'), index=False)
+        data[s + '_y'].to_csv(os.path.join(cur_path, s + '_y.csv'), index=False)
+        data[s + '_z'].to_csv(os.path.join(cur_path, s + '_z.csv'), index=False)
 
 
 def nearest_time(tms, df):
+    """
+    Args:
+        tms: integer timestamp
+        df: DataFrame to search timestamp
+
+    Returns: DataFrame index
+
+    Description: search the nearest index timestamp to the input tms in the df
+    """
     # print(tms, df[np.abs(df - tms).argmin()])
     the_value = df[np.abs(df - tms).argmin()]
     # print(df[np.abs(df - tms).argmin()])
@@ -295,7 +316,6 @@ def nearest_time(tms, df):
 
 def get_sync_data(sync_time, raw_data):
     """
-
     Args:
         sync_time: pandas data range containing time to sync
         raw_data: DataFrame with sensor unsync measurements
@@ -356,7 +376,7 @@ def synchronise(rawData, user, activity, path):
             times = []
             for k in activity_data.keys():
                 # ## Calculate time in msec & sec
-                activity_data[k]['msec'] = activity_data[k]['time'].dt.microsecond//1000
+                activity_data[k]['msec'] = activity_data[k]['time'].dt.microsecond // 1000
                 activity_data[k]['sec'] = activity_data[k]['time'].dt.second
 
                 # print(sorted(dict(activity_data[k]['sec'].value_counts()).items()))
