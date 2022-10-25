@@ -34,6 +34,17 @@ def make_sure_path_exists(path):
 
 
 def means(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with mean sensor values
+
+    Description: Calculate mean
+    """
+
     df_mean = pd.DataFrame()
     if mag:
         df_mean[prefix] = data.mean(axis=1)
@@ -44,6 +55,16 @@ def means(data, prefix, mag):
 
 
 def stds(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with std sensor values
+
+    Description: Calculate standard deviation
+    """
     df_std = pd.DataFrame()
     if mag:
         df_std[prefix] = data.std(axis=1)
@@ -54,6 +75,17 @@ def stds(data, prefix, mag):
 
 
 def mad(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with mad sensor values
+
+    Description: Calculate mean absolute deviation
+                 MAD is defined as average distance between each value and mean.
+    """
     df_mad = pd.DataFrame()
     if mag:
         df_mad[prefix] = data.mad(axis=1)
@@ -64,6 +96,18 @@ def mad(data, prefix, mag):
 
 
 def percentile(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with percentiles sensor values
+
+    Description: Calculate percentile scores
+                 A percentile is a comparison score between a particular
+                 score and the scores of the rest of a group.
+    """
     df_percentile = pd.DataFrame()
     if mag:
         df_percentile[''.join([prefix.split('_')[0], '25', prefix.split('_')[1]])] = \
@@ -82,6 +126,17 @@ def percentile(data, prefix, mag):
 
 
 def moments(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with moments sensor values
+
+    Description: Calculate percentile scores
+                 Moments describe the characteristic of the distribution
+    """
     df_moment = pd.DataFrame()
     if mag:
         df_moment[''.join([prefix.split('_')[0], '3', prefix.split('_')[1]])] = \
@@ -96,6 +151,16 @@ def moments(data, prefix, mag):
 
 
 def min_max(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with min and max sensor values
+
+    Description: Calculate min and max values
+    """
     df_min_max = pd.DataFrame()
     if mag:
         df_min_max[prefix[0]] = data.min(axis=1)
@@ -109,6 +174,17 @@ def min_max(data, prefix, mag):
 
 
 def correlation(data, prefix, sensors):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        sensors: list of sensors involved
+
+    Returns: DataFrame with correlation sensor values
+
+    Description: Calculate correlations in the tri-axial sensor measurements
+                 corr in XY, XZ, YZ axes
+    """
     df_corr = pd.DataFrame()
     for s in sensors:
         df_corr[prefix + s + 'XY'] = data[s + 'X'].corrwith(data[s + 'Y'], axis=1)
@@ -119,6 +195,18 @@ def correlation(data, prefix, sensors):
 
 
 def cosine_distance(data, prefix, sensors):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        sensors: list of sensors involved
+
+    Returns: DataFrame with cosine distance sensor values
+
+    Description: Calculate cosine distances in the tri-axial sensor measurements
+                 Similar to cosine similarity between two vectors
+                 cos distance in XY, XZ, YZ axes
+    """
     cos_values = []
     df_cos = pd.DataFrame()
     # Sensor Cosine Distance
@@ -136,6 +224,18 @@ def cosine_distance(data, prefix, sensors):
 
 
 def kurtosis(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with kurtosis sensor values
+
+    Description: Kurtosis is the fourth central moment divided by the square of the variance.
+                 A measure of how heavy tail is compared to a normal distribution.
+    """
+
     df_kurtosis = pd.DataFrame()
     if mag:
         df_kurtosis[prefix] = data.kurtosis(axis=1)
@@ -147,6 +247,17 @@ def kurtosis(data, prefix, mag):
 
 
 def skewness(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with skewness sensor values
+
+    Description: Skewness is a statistical measure of asymmetric distribution of data.
+    """
+
     df_skewness = pd.DataFrame()
     if mag:
         df_skewness[prefix] = data.skew(axis=1)
@@ -158,6 +269,17 @@ def skewness(data, prefix, mag):
 
 
 def interquartile(data, prefix, mag):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with interquartile sensor values
+
+    Description: Interquartile is a measure of statistical dispersion, which is the spread of the data.
+    """
+
     df_iqr = pd.DataFrame()
     if mag:
         df_iqr[prefix] = iqr(data, axis=1)
@@ -170,6 +292,16 @@ def interquartile(data, prefix, mag):
 
 
 def autocorrelation(data, prefix):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with auto-correlation sensor values
+
+    Description: Auto-correlation is the correlation of a signal with
+                 a delayed copy of itself as a function of delay
+    """
     autocorrs = []
     for i, row in data.iterrows():
         # subtract the average magnitude
@@ -183,6 +315,18 @@ def autocorrelation(data, prefix):
 
 
 def signal_entropy(data, prefix):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with entropy sensor values
+
+    Description: Calculate the entropy of a distribution for given probability values.
+                 Entropy or Shannon's entropy quantifies the amount of uncertainty (or surprise)
+                 involved in the value of a random variable or the outcome of a random process.
+
+    """
     df_entropy = pd.DataFrame()
     for key in data.keys():
         df_entropy[prefix + key] = entropy(abs(data[key]), axis=1)
@@ -191,6 +335,16 @@ def signal_entropy(data, prefix):
 
 
 def energy_axial(data, prefix):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with energy sensor values
+
+    Description: Calculate the energy of the raw signal in each axes of the tri-axial input
+    """
+
     df_energies = pd.DataFrame()
     for key in data.keys():
         df_energies[prefix + key] = (data[key] ** 2).sum(axis=1)
@@ -200,7 +354,14 @@ def energy_axial(data, prefix):
 
 def sma(data, prefix):
     """
-    signal magnitude area
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with sma sensor values
+
+    Description: Calculate the signal magnitude area of the raw input signal.
+                 SMA is a statistical measure of the magnitude of a varying quantity.
     """
     df_sma = pd.DataFrame()
     for key in data.keys():
@@ -294,7 +455,14 @@ def arburg2(data, order, prefix, mag):
 
 def mean_freq(data, prefix, mag):
     """
-    Weighted average of the frequency components to obtain a mean frequency
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+        mag: Boolean flag to calculate magnitude or not
+
+    Returns: DataFrame with mean frequencies sensor values
+
+    Description: Calculate Weighted average of the frequency components to obtain a mean frequency
     """
     # built frequencies list (each column contain 128 value)
     # duration between each two successive captures is 0.02 s= 1/50hz
@@ -323,9 +491,16 @@ def mean_freq(data, prefix, mag):
 
 def value_entropy(data, prefix):
     """
-    value-entropy (entropy calculated from a histogram of
-    quantization of the magnitude values to 20 bins)
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with value entropy sensor values
+
+    Description: Calculate value-entropy (entropy calculated from a histogram of
+                 quantization of the magnitude values to 20 bins)
     """
+
     entropies = []
     if data.isnull().values.any():
         # Handle NaN-Infite values of histogram
@@ -343,11 +518,18 @@ def value_entropy(data, prefix):
 
 def time_entropy(data, prefix):
     """
-    time-entropy (entropy calculated from normalizing
-    the magnitude signal and treating it as a probability
-    distribution, which is designed to detect peakiness in
-    time—sudden bursts of magnitude)
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with time entropy sensor values
+
+    Description: Calculate time-entropy (entropy calculated from normalizing
+                 the magnitude signal and treating it as a probability
+                 distribution, which is designed to detect peakiness in
+                 time—sudden bursts of magnitude)
     """
+
     # TODO: This is not right implementation
     entropies = []
     for i, row in data.iterrows():
@@ -360,6 +542,16 @@ def time_entropy(data, prefix):
 
 
 def spectral_entropy(data, prefix):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with spectral entropy sensor values
+
+    Description: Calculate spectral-entropy as the measure of its spectral power distribution.
+    """
+
     entropies = []
     for i, row in data.iterrows():
         psd = (np.abs(np.fft.fft(row)) ** 2)
@@ -374,6 +566,16 @@ def spectral_entropy(data, prefix):
 
 
 def energy(data, prefix):
+    """
+    Args:
+        data: dictionary with sensor raw signal
+        prefix: str column prefix to store data in a DataFrame
+
+    Returns: DataFrame with energies in different bands sensor values
+
+    Description: Calculate signal energies by applying butter filters to cut frequencies.
+    """
+
     def butter_bandpass(lowcut, highcut, fs):
         nyq = 0.5 * fs
         low = lowcut / nyq
@@ -547,6 +749,15 @@ def angles(data, prefix, sensors):
 
 
 def magnitude(data, sensors):
+    """
+    Args:
+        data: dictionary with raw sensor data
+        sensors: list of sensors involved
+
+    Returns: DataFrame with magnitude features corresponding the input sensors
+
+    Description: Calculate magnitude features for raw sensor values.
+    """
     df_magnitude = pd.DataFrame()
     # Sensor Magnitude
     for s in sensors:
@@ -591,11 +802,13 @@ def magnitude(data, sensors):
 
 def process_labels(labels):
     """
-    :param labels: Ground truth labels in DataFrame form
-    :return:  Ground truth labels involving locomotion and activity in DataFrame form
+    Args:
+        labels: DataFrame with ground truth activity labels
+    Returns: DataFrame with ground truth labels involving locomotion and activity
 
     Description: Add locomotion context to the activity labeling
     """
+
     re_labels = []
 
     for l in labels['Label']:
@@ -621,7 +834,10 @@ def features_extraction(user_data, config_sensors, path_to_save_features):
         config_sensors: list of sensors
         path_to_save_features: str path to save extracted features
 
-    Returns:
+    Returns: None
+
+    Description: Extract features from raw IMU signals
+                 Save data into the data/features directory in .csv form
     """
     raw_signal = {}
     sensors = []
@@ -703,6 +919,7 @@ def main():
     make_sure_path_exists(path_to_save_features)
 
     # ## FEATURE EXTRACTION PROCESS
+    # extract features for each user
     for user in users:
         print('Process: ', user.split('/')[-1])
         features_extraction(user, config_sensors=sensors, path_to_save_features=path_to_save_features)
